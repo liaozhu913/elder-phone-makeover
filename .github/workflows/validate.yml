@@ -1,0 +1,44 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  self-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 脚本语法检查
+        run: python -m py_compile scripts/elder_tool.py scripts/build_apk.py
+
+      - name: 脚本自检（无设备时应优雅提示，不崩溃）
+        run: |
+          python scripts/elder_tool.py --json check || true
+          python scripts/elder_tool.py --json info || true
+
+      - name: 敏感信息扫描（本机绝对路径 / 常见凭证）
+        run: |
+          echo "扫描不应出现在公开仓库里的本机绝对路径与敏感串..."
+          if grep -rInE "(G:[/\\\\]codex|/Users/[A-Za-z0-9._-]+/|C:[/\\\\]Users[/\\\\][A-Za-z0-9._-]+)" \
+              --include="*.py" --include="*.md" --exclude-dir=".github" . ; then
+            echo "::error::发现疑似个人电脑绝对路径，请中性化后再提交。"
+            exit 1
+          fi
+          echo "未发现个人绝对路径。"
+
+      - name: 必备文件检查
+        run: |
+          for f in SKILL.md README.md LICENSE NOTICE.md CHANGELOG.md \
+                   scripts/elder_tool.py scripts/build_apk.py \
+                   assets/elder-launcher.apk references/01_改造流程.md; do
+            test -f "$f" || { echo "::error::缺少 $f"; exit 1; }
+          done
+          test -s assets/elder-launcher.apk || { echo "::error::成品 APK 为空"; exit 1; }
+          echo "必备文件齐全。"

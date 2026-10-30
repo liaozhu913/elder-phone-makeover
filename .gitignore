@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+*.swp
+
+# 临时与本地产物（不入库）
+*.log
+*.tmp
+*.bak
+build_log.txt
+
+# 注意：assets/elder-launcher.apk 与 assets/preview/*.png 需要提交，勿排除。
